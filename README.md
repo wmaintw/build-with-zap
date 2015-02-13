@@ -19,7 +19,7 @@ public WebDriver setupDriverProxy() {
 
     return driver = new FirefoxDriver(capabilities);
 }
-`
+```
 
 **step 2 Run Gradle Task**
 
