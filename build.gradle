@@ -1,0 +1,24 @@
+apply plugin: "java"
+apply plugin: "idea"
+apply plugin: "application"
+
+apply from: "zap.gradle"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile(
+            'junit:junit:4.9',
+            'org.seleniumhq.selenium:selenium-java:2.44.0'
+    )
+}
+
+sourceSets {
+    test {
+        resources {
+            srcDir 'src/test/resources'
+        }
+    }
+}

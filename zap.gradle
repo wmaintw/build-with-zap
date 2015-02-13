@@ -1,0 +1,94 @@
+import groovyx.net.http.RESTClient
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'org.codehaus.groovy.modules.http-builder:http-builder:0.7.1'
+    }
+}
+
+dependencies {
+    compile files('libs/zap-api-v2-8.jar')
+    testCompile (
+            'commons-io:commons-io:2.4',
+            'com.fasterxml.jackson.core:jackson-databind:2.5.1',
+            'org.apache.velocity:velocity:1.7',
+            'org.apache.velocity:velocity-tools:2.0'
+    )
+}
+
+task buildWithZap(type: Test) {
+    outputs.upToDateWhen {
+        false
+    }
+
+    include "proxy/**"
+//    include "original/**"
+
+    doFirst {
+        startZap()
+        waitUntilZapStarted()
+    }
+
+    doLast {
+        generateZapReport()
+    }
+}
+
+task stopZap(dependsOn: [testClasses]) {
+    doLast {
+        println "Stopping ZAP..."
+
+        runZapTask(["stop", "localhost", "7070", "123456"])
+    }
+}
+
+def startZap() {
+    println "Starting ZAP..."
+
+    runZapTask(["start", "/Users/wma/Downloads/security/zap-for-linux/ZAP_2.3.1/zap.sh", "123456"])
+}
+
+def runZapTask(params) {
+    javaexec {
+        main = "zap.ZapHelper"
+        classpath = sourceSets.test.runtimeClasspath
+        args = params
+    }
+}
+
+def waitUntilZapStarted() {
+    def restClient = new RESTClient("http://zap")
+    restClient.setProxy("localhost", 7070, "http")
+    def counter = 0;
+    def status = 0;
+
+    while (true) {
+        println "waiting ZAP"
+
+        try {
+            status = restClient.get(path: "/").status
+        } catch (Exception e) {}
+
+        if (status == 200) {
+            println "ZAP started"
+            break
+        } else {
+            if (counter >= 10) {
+                println "fail to start ZAP due to timeout"
+                break
+            }
+
+            sleep(5 * 1000)
+            counter += 1
+        }
+    }
+}
+
+def generateZapReport() {
+    sleep(5 * 1000)
+    runZapTask(["report", "localhost", "7070", "http://localhost:8080/WebGoat"])
+}

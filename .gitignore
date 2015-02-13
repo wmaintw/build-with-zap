@@ -1,0 +1,5 @@
+zap-reports/
+*.iml
+*.ipr
+*.iws
+out/
